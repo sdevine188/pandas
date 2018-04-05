@@ -39,7 +39,8 @@ movies.Rating.value_counts()
 
 # distinct
 movies[["Genre", "Rating"]].drop_duplicates()
-movies[["Genre", "Rating"]].value_counts()
+# .value_counts doesn't work with multiple variables apparently
+#movies[["Genre", "Rating"]].value_counts()
 
 
 # arrange
@@ -90,16 +91,21 @@ movies.groupby(["Genre", "Rating"]).size().reset_index(name = "n")
 
 # spread
 movies.groupby(["Genre", "Rating"]).size().reset_index(name = "n").\
-        pivot_table(values = "n", index = "Genre", columns = "Rating", aggfunc = "sum")
+        pivot(index = "Genre", columns = "Rating", values = "n").reset_index().\
+        rename_axis(None, axis = 1)
 
 movies.groupby(["Movie", "Genre", "Rating"]).size().reset_index(name = "n").\
+        assign(genre_rating = movies.Genre.str.cat(movies.Rating, sep = "_")).\
+        pivot(index = "Movie", columns = "genre_rating", values = "n").reset_index().\
+        rename_axis(None, axis = 1)
         
-
-
-
-
-
-
+# gather
+movies_gather = movies.groupby(["Genre", "Rating"]).size().reset_index(name = "n").\
+        pivot(index = "Genre", columns = "Rating", values = "n").reset_index().\
+        rename_axis(None, axis = 1)
+movies_gather
+movies_gather.melt(id_vars = ["Genre"], value_vars = ["PG-13", "R"], 
+                   var_name = "Rating", value_name = "movie_count")
 
 
 
