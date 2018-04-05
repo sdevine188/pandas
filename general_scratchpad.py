@@ -107,17 +107,32 @@ movies_gather
 movies_gather.melt(id_vars = ["Genre"], value_vars = ["PG-13", "R"], 
                    var_name = "Rating", value_name = "movie_count")
 
+# bind_rows
+movies1 = movies.iloc[0:5, ]
+movies1
+movies2 = movies.iloc[5:, ]
+movies2
+movies_original = movies1.append(movies2)
+movies_original
 
+movies3 = movies.iloc[0:5, 0:1]
+movies3
+movies_new = movies3.append(movies2)
+movies_new
 
+# bind_cols
+movies1 = movies.iloc[:, 0:2]
+movies1
+movies2 = movies.iloc[:, 2:]
+movies2
+movies_concat = pd.concat([movies1, movies2], axis = 1)
+movies_concat
 
-
-
-
-
-
-
-
-
-
-
-
+# left_join
+movies1 = movies.iloc[:, 0:2]
+movies1
+movies2 = movies.iloc[:, 1:]
+movies2
+movies_new = pd.merge(left = movies1, right = movies2, how = "left", 
+                      left_on = ["Actor"], right_on = ["Actor"])
+movies_new
