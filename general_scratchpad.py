@@ -136,3 +136,20 @@ movies2
 movies_new = pd.merge(left = movies1, right = movies2, how = "left", 
                       left_on = ["Actor"], right_on = ["Actor"])
 movies_new
+
+# purrr
+movies.Sales + 1
+
+def add_string(column):
+        return "new_string_" + column
+
+add_string(movies.Actor)  
+movies.Actor.apply(add_string)
+movies[["Actor", "Movie"]].apply(add_string)
+
+# tidy eval
+var_name = "Actor"
+movies[var_name]      
+
+var_name2 = "Movie"
+movies[[var_name, var_name2]]
