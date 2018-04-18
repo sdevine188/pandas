@@ -59,6 +59,7 @@ movies.assign(new_movie_title = movies.Movie)
 movies[(movies.Genre == "Adventure") | (movies.Genre == "Documentary")]
 movies.query("Genre == 'Adventure' | Genre == 'Documentary'")
 movies.query("Genre in ['Adventure', 'Documentary']")
+movies.query("Rating == 'R' & Sales > 20")
 
 # summarize
 movies.groupby("Genre").agg(["mean", "sum", "count"])
@@ -147,9 +148,36 @@ add_string(movies.Actor)
 movies.Actor.apply(add_string)
 movies[["Actor", "Movie"]].apply(add_string)
 
-# tidy eval
+# tidy eval select
 var_name = "Actor"
 movies[var_name]      
 
 var_name2 = "Movie"
 movies[[var_name, var_name2]]
+
+# tidy eval query
+# tidy eval with local variables uses the @ symbol instead of !! to unquote
+value1 = "Dunkirk"
+movies.query("Movie == @value1")
+
+var1 = "Movie"
+query_string = var1 + " == '" + value1 + "'"
+query_string
+movies.query(query_string)
+
+movies.query("{} == 'Dunkirk'".format(var1))
+movies.query("{} == @value1".format(var1))
+movies.query("{} == '{}'".format(var1, value1))
+
+# tidy eval rename
+var1 = "Movie"
+new_var = "new_movie_title"
+movies.rename(columns = {"Movie" : "new_movie_title"})
+movies.rename(columns = {var1 : new_var})
+
+
+# tidy eval: the eval function can be used for numeric calculations
+movies.eval('new_sales = Sales + 1')
+movies.eval('new_sales = Sales + 1', inplace = True)
+
+
