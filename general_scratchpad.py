@@ -54,6 +54,17 @@ movies.rename(columns = {"Movie" : "new_movie_title"})
 
 # mutate
 movies.assign(new_movie_title = movies.Movie)
+movies = movies.assign(new_movie_title = movies.Movie)
+movies["sale_greater_30"] = np.where(movies["Sales"] > 30, "yes", "no")
+# note np.where only works with numeric
+#movies["adventure_dummy"] = np.where(movies["Genre"] = "Adventure", "yes", "no")
+
+# instead of np.where, create new var, then conditional mutate using .loc
+movies = movies.assign(adventure_dummy = "no")
+movies.loc[movies["Sales"] > 30]
+movies.loc[movies["Sales"] > 30, "adventure_dummy"]
+movies.loc[movies["Sales"] > 30, "adventure_dummy"] = ">30"
+
 
 # filters
 movies[(movies.Genre == "Adventure") | (movies.Genre == "Documentary")]
