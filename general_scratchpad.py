@@ -55,6 +55,8 @@ movies.rename(columns = {"Movie" : "new_movie_title"})
 # mutate
 movies.assign(new_movie_title = movies.Movie)
 movies = movies.assign(new_movie_title = movies.Movie)
+
+# conditional mutate
 movies["sale_greater_30"] = np.where(movies["Sales"] > 30, "yes", "no")
 # note np.where only works with numeric
 #movies["adventure_dummy"] = np.where(movies["Genre"] = "Adventure", "yes", "no")
@@ -158,6 +160,20 @@ def add_string(column):
 add_string(movies.Actor)  
 movies.Actor.apply(add_string)
 movies[["Actor", "Movie"]].apply(add_string)
+# apply axis = 0 (default) iterates over rows, axis = 1 iterates over columns, but same effect here
+movies[["Actor", "Movie"]].apply(add_string, axis = 0)
+movies[["Actor", "Movie"]].apply(add_string, axis = 1)
+
+# lambda function on the fly
+movies.Actor.apply(lambda row: "new_string_" + row)
+movies[["Actor", "Movie"]].apply(lambda row: "new_string_" + row)
+
+# map function
+# note that map only works on series, applymap only works on dataframes
+movies.Actor.map(add_string)
+movies.Actor.applymap(add_string)
+movies[["Actor", "Movie"]].map(add_string)
+movies[["Actor", "Movie"]].applymap(add_string)
 
 # tidy eval select
 var_name = "Actor"
