@@ -1,6 +1,9 @@
 import os
 import pandas as pd
 import numpy as np
+from dplython import (DplyFrame, X, diamonds, select, sift,
+  sample_n, sample_frac, head, arrange, mutate, group_by,
+  summarize, DelayFunction)
 
 # set working directory
 os.chdir("C:/Users/Stephen/Desktop/Python/pandas")
@@ -63,9 +66,9 @@ movies["sale_greater_30"] = np.where(movies["Sales"] > 30, "yes", "no")
 
 # instead of np.where, create new var, then conditional mutate using .loc
 movies = movies.assign(adventure_dummy = "no")
-movies.loc[movies["Sales"] > 30]
-movies.loc[movies["Sales"] > 30, "adventure_dummy"]
-movies.loc[movies["Sales"] > 30, "adventure_dummy"] = ">30"
+movies.loc[movies.Sales > 30]
+movies.loc[movies.Sales > 30, "adventure_dummy"]
+movies.loc[movies.Sales > 30, "adventure_dummy"] = ">30"
 
 
 # filters
@@ -167,6 +170,7 @@ movies[["Actor", "Movie"]].apply(add_string, axis = 1)
 # lambda function on the fly
 movies.Actor.apply(lambda row: "new_string_" + row)
 movies[["Actor", "Movie"]].apply(lambda row: "new_string_" + row)
+movies.groupby("Sales").apply(lambda x: x.mean())
 
 # map function
 # note that map only works on series, applymap only works on dataframes
@@ -207,4 +211,21 @@ movies.rename(columns = {var1 : new_var})
 movies.eval('new_sales = Sales + 1')
 movies.eval('new_sales = Sales + 1', inplace = True)
 
+
+########################################################
+#######################################################
+#######################################################
+
+
+# dplython select
+# https://pythonhosted.org/dplython/
+movies_dpf = DplyFrame(movies)
+movies_dpf
+movies_dpf >> select(X.Actor) >> head(5)
+
+# dplython 
+movies.count()
+movies_dpf.count()
+movies_dpf >> group_by(X.Genre) >> \
+        summarize(avg_sales = X.Sales.mean(), genre_count = X.Actor.size())
 
