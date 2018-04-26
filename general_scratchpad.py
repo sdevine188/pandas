@@ -176,6 +176,7 @@ movies[["Actor", "Movie"]].apply(add_string, axis = 1)
 movies.Actor.apply(lambda row: "new_string_" + row)
 movies[["Actor", "Movie"]].apply(lambda row: "new_string_" + row)
 movies.groupby("Sales").apply(lambda x: x.mean())
+movies.groupby("Genre").apply(lambda x: x.Sales.mean())
 
 # map function
 # note that map only works on series, applymap only works on dataframes
