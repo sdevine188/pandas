@@ -41,8 +41,10 @@ movies.Actor.values
 movies.Rating.value_counts()
 
 # distinct
+movies.Genre.unique()
+movies.Genre.value_counts()
 movies[["Genre", "Rating"]].drop_duplicates()
-# .value_counts doesn't work with multiple variables apparently
+# value_counts() and unique() don't work with dataframe, only with series
 #movies[["Genre", "Rating"]].value_counts()
 
 
@@ -58,6 +60,9 @@ movies.rename(columns = {"Movie" : "new_movie_title"})
 # mutate
 movies.assign(new_movie_title = movies.Movie)
 movies = movies.assign(new_movie_title = movies.Movie)
+
+# mutate using replace
+movies.Genre.replace("Sci-fi", "science_fiction")
 
 # conditional mutate
 movies["sale_greater_30"] = np.where(movies["Sales"] > 30, "yes", "no")
@@ -206,10 +211,38 @@ new_var = "new_movie_title"
 movies.rename(columns = {"Movie" : "new_movie_title"})
 movies.rename(columns = {var1 : new_var})
 
-
 # tidy eval: the eval function can be used for numeric calculations
+eval_string = 'new_sales = Sales + 1'
+eval_string
 movies.eval('new_sales = Sales + 1')
 movies.eval('new_sales = Sales + 1', inplace = True)
+
+
+# pipe function - note you need to wrap code including pipe in parenthesis for some kind of delayed eval
+# return only series
+def plus1_series(dataframe, variable):
+        return dataframe[variable] + 1
+plus1_series(dataframe = movies, variable = ["Sales"])
+movies.pipe(plus1_series, variable = ["Sales"])
+
+# return entire df
+def plus1_df(dataframe, variable):
+        return dataframe.assign(new_var = dataframe[variable] + 1)
+plus1_df(dataframe = movies, variable = ["Sales"])
+movies.pipe(plus1_df, variable = ["Sales"])
+
+def copy_var(dataframe, variable):
+        return dataframe.\
+        assign(new_var2 = dataframe[variable])
+copy_var(dataframe = movies, variable = ["Genre"])
+movies.pipe(plus1_df, variable = ["Sales"]).pipe(copy_var, variable = ["Sales"])
+
+def join_string(dataframe, variable, string):
+        return dataframe.assign(new_var3 = dataframe[variable] + string)
+join_string(dataframe = movies, variable = ["Genre"], string = "test")
+movies.pipe(plus1_df, variable = ["Sales"])\
+        .pipe(copy_var, variable = ["Sales"])\
+        .pipe(join_string, variable = ["Genre"], string = "test")
 
 
 ########################################################
