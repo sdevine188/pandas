@@ -177,6 +177,8 @@ movies.Actor.apply(lambda row: "new_string_" + row)
 movies[["Actor", "Movie"]].apply(lambda row: "new_string_" + row)
 movies.groupby("Sales").apply(lambda x: x.mean())
 movies.groupby("Genre").apply(lambda x: x.Sales.mean())
+movies.groupby("Genre").apply(lambda x: x.Sales.mean()).reset_index(name = "mean")
+
 
 # map function
 # note that map only works on series, applymap only works on dataframes
@@ -220,24 +222,29 @@ movies.eval('new_sales = Sales + 1', inplace = True)
 
 
 # pipe function - note you need to wrap code including pipe in parenthesis for some kind of delayed eval
-# return only series
+# pipe: return only series
 def plus1_series(dataframe, variable):
         return dataframe[variable] + 1
 plus1_series(dataframe = movies, variable = ["Sales"])
 movies.pipe(plus1_series, variable = ["Sales"])
 
-# return entire df
+# pipe: return entire df
 def plus1_df(dataframe, variable):
         return dataframe.assign(new_var = dataframe[variable] + 1)
 plus1_df(dataframe = movies, variable = ["Sales"])
 movies.pipe(plus1_df, variable = ["Sales"])
+# pipe with tidy eval
+new_var = "Sales"
+movies.pipe(plus1_df, variable = [new_var])
 
+# multiple pipes into each other
 def copy_var(dataframe, variable):
         return dataframe.\
         assign(new_var2 = dataframe[variable])
 copy_var(dataframe = movies, variable = ["Genre"])
 movies.pipe(plus1_df, variable = ["Sales"]).pipe(copy_var, variable = ["Sales"])
 
+# multiple arguments to a pipe function
 def join_string(dataframe, variable, string):
         return dataframe.assign(new_var3 = dataframe[variable] + string)
 join_string(dataframe = movies, variable = ["Genre"], string = "test")
