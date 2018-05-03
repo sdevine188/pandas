@@ -35,6 +35,7 @@ movies[0:2]
 movies[["Movie", "Actor"]]
 movies.loc[:, "Movie":"Rating"]
 movies.drop(['Movie', 'Actor'], axis = 1)
+movies.columns
 
 # get values
 movies.Actor.values
