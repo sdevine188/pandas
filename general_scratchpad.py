@@ -36,6 +36,11 @@ movies[["Movie", "Actor"]]
 movies.loc[:, "Movie":"Rating"]
 movies.drop(['Movie', 'Actor'], axis = 1)
 movies.columns
+# note single brackets or dot subsetting just provides series without var name
+# but double brackets returns dataframe
+movies.Actor
+movies["Actor"]
+movies[["Actor"]]
 
 # get values
 movies.Actor.values
@@ -166,6 +171,11 @@ movies.Sales + 1
 def add_string(column):
         return "new_string_" + column
 
+def get_variable_type(variable):
+        return(variable.dtype.name)
+        
+movies.apply(get_variable_type)
+
 add_string(movies.Actor)  
 movies.Actor.apply(add_string)
 movies[["Actor", "Movie"]].apply(add_string)
@@ -222,7 +232,7 @@ movies.eval('new_sales = Sales + 1')
 movies.eval('new_sales = Sales + 1', inplace = True)
 
 
-# pipe function - note you need to wrap code including pipe in parenthesis for some kind of delayed eval
+# pipe function 
 # pipe: return only series
 def plus1_series(dataframe, variable):
         return dataframe[variable] + 1
