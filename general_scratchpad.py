@@ -175,6 +175,7 @@ def get_variable_type(variable):
         return(variable.dtype.name)
         
 movies.apply(get_variable_type)
+movies.dtypes
 
 add_string(movies.Actor)  
 movies.Actor.apply(add_string)
@@ -262,6 +263,26 @@ join_string(dataframe = movies, variable = ["Genre"], string = "test")
 movies.pipe(plus1_df, variable = ["Sales"])\
         .pipe(copy_var, variable = ["Sales"])\
         .pipe(join_string, variable = ["Genre"], string = "test")
+        
+        
+# janitor tabyl / table
+pd.crosstab(movies.Genre, movies.Rating)
+type(pd.crosstab(movies.Genre, movies.Rating))
+pd.crosstab(movies.Genre, movies.Rating).columns
+pd.crosstab(movies.Genre, movies.Rating)["PG-13"]
+pd.crosstab(movies.Genre, movies.Rating)["PG-13"].reset_index()
+pd.crosstab(movies.Genre, movies.Rating)["PG-13"].reset_index().Genre
+pd.crosstab(movies.Genre, movies.Rating, margins = True)
+
+# to get percentages, use normalize
+# normalize = "all", "index" (for rows), or "columns"
+pd.crosstab(movies.Genre, movies.Rating, margins = True, normalize = "all")
+pd.crosstab(movies.Genre, movies.Rating, margins = True, normalize = "index")
+pd.crosstab(movies.Genre, movies.Rating, margins = True, normalize = "columns")
+
+# can run crosstab on multiple variables
+pd.crosstab([movies.Genre, movies.Movie], movies.Rating, margins = True)
+
 
 
 ########################################################
