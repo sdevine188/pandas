@@ -283,7 +283,19 @@ pd.crosstab(movies.Genre, movies.Rating, margins = True, normalize = "columns")
 # can run crosstab on multiple variables
 pd.crosstab([movies.Genre, movies.Movie], movies.Rating, margins = True)
 
-
+# if/else statement
+value = 2
+if value > 5:
+        print("greater_than_5")
+elif value > 4:
+        print("greater_than_4")
+else: 
+        print("less_than_or_equal_to_4")
+        
+# for loop
+for sale_amount in movies["Sales"]:
+        print(sale_amount + 1)
+        
 
 ########################################################
 #######################################################
