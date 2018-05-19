@@ -23,11 +23,31 @@ x
 movies = pd.read_csv("movies.csv")
 
 # inspect
+# note that read_csv converts blanks, NA, or NaN into NaN
+movies
 movies.shape
 movies.head()
 movies.tail(2)
 movies.describe()
 movies.dtypes
+
+
+#################################################
+
+
+# missing values
+# check for missing
+movies.apply(lambda x: x.isnull())
+movies.apply(lambda x: x.isnull().sum())
+
+# drop na values
+movies.Movie.dropna()
+movies.dropna()
+
+# add na values
+movies.loc[4:4, "Actor"]
+movies.loc[4:4, "Actor"] = np.nan
+movies
 
 
 ##############################################33
@@ -39,6 +59,10 @@ movies.Actor
 movies.Actor[0:3]
 movies[0:2]
 movies[["Movie", "Actor"]]
+movies.loc[1:2, "Movie"]
+movies.loc[0:0, "Movie"]
+movies.loc[:, "Movie"]
+movies.loc[:, ["Movie", "Rating"]]
 movies.loc[:, "Movie":"Rating"]
 movies.drop(['Movie', 'Actor'], axis = 1)
 movies.columns
