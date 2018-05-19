@@ -27,6 +27,7 @@ movies.shape
 movies.head()
 movies.tail(2)
 movies.describe()
+movies.dtypes
 
 
 ##############################################33
