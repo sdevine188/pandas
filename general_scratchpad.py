@@ -17,10 +17,27 @@ x
 
 ##############################
 
+
+# remove all varaibles currently in environment
+#%reset
+
+# remove particular variable
+x = "test"
+x
+
+x = None
+x
+
+
+#################################################
+
 #https://pandas.pydata.org/pandas-docs/stable/comparison_with_r.html
 
-# read in data
+# read in csv
 movies = pd.read_csv("movies.csv")
+
+# write csv
+movies.to_csv("movies_test_to_csv.csv", index = False)
 
 # inspect
 # note that read_csv converts blanks, NA, or NaN into NaN
@@ -30,6 +47,35 @@ movies.head()
 movies.tail(2)
 movies.describe()
 movies.dtypes
+movies.columns
+
+
+################################################
+
+
+# create dataframe from scratch - format is like a dictionary
+new_df = pd.DataFrame({"var_name" : ["test", "test2", "abc"]})
+new_df
+
+
+#####################################################
+
+
+# copying dataframe - you need to use .copy() 
+# if not, the "copy" is just a relabeld version of the original, and changes to "copy" affect original
+
+# this is what happens without .copy()
+movies
+movies2 = movies
+movies2.loc[movies.Actor == "Harrison Ford", "Actor"] = "Edward Norton"
+movies2
+movies
+
+# this is desired/correct behavior with .copy()
+movies2 = movies.copy()
+movies2.loc[movies.Actor == "Edward Norton", "Actor"] = "Christian Bale"
+movies2
+movies
 
 
 #################################################
@@ -46,7 +92,35 @@ movies.dropna()
 
 # add na values
 movies.loc[4:4, "Actor"]
+movies.loc[4:4, "Actor"] = "NaN"  # a sting value of "NaN" doesn't work
+movies
+movies.apply(lambda x: x.isnull().sum())
 movies.loc[4:4, "Actor"] = np.nan
+movies
+movies.apply(lambda x: x.isnull().sum())
+
+
+movies.loc[4:4, "Sales"]
+movies.loc[4:4, "Sales"] = np.nan
+movies
+
+movies2 = movies.replace({"Actor" : {"HAL" : np.nan}}).copy()
+movies2
+movies2.apply(lambda x: x.isnull().sum())
+
+
+######################################################
+
+
+# convert numeric to string
+movies.dtypes
+movies[["Sales"]] = movies[["Sales"]].astype(str)
+movies.dtypes
+movies
+
+# convert string to numeric
+movies[["Sales"]] = movies[["Sales"]].astype(float)
+movies.dtypes
 movies
 
 
@@ -66,6 +140,14 @@ movies.loc[:, ["Movie", "Rating"]]
 movies.loc[:, "Movie":"Rating"]
 movies.drop(['Movie', 'Actor'], axis = 1)
 movies.columns
+
+# select all variables except some
+movies.loc[:, ~(movies.columns.isin(["Actor"]))]
+
+# select columns using regex
+movies.loc[:, movies.columns.str.contains(pat = "^Act", case = False, regex = True)]
+
+
 # note single brackets or dot subsetting just provides series without var name
 # but double brackets returns dataframe
 movies.Actor
@@ -114,9 +196,19 @@ movies.rename(columns = {"Movie" : "new_movie_title"})
 movies.assign(new_movie_title = movies.Movie)
 movies = movies.assign(new_movie_title = movies.Movie)
 
+# case_when
+# best way to conditional mutate is using .loc
+movies2 = movies.copy()
+movies2
+movies2.loc[(movies.Genre == "Documentary") | (movies.Genre == "Adventure"), "Genre"] = "best_genre"
+movies2.loc[(movies.Genre.isin(["best_genre", "Sci-fi"])), "Genre"] = "new_best_genre"
+movies2
 
 # case_when
-# mutate using replace
+# mutate using replace can require less coding than .loc for multiple specific replacements
+# replace using arrays
+movies.Genre.replace("Sci-fi", "science_fiction")
+movies.Genre.replace(["Sci-fi", "Adventure"], "good_movies")
 # replace using a dictionary
 # regex = False requires the entire pattern to match the entire value
 movies.replace({"Actor" : "Tom Hardy", "Movie" : "AI"}, "awesome")
@@ -152,7 +244,7 @@ movies.replace({replacement_df.replacement_variable[0] : \
 #movies.Genre.replace(["Sci-fi", "Adventure"], ["science_fiction", "super_fun"])
 
 # conditional mutate
-movies["sale_greater_30"] = np.where(movies["Sales"] > 30, "yes", "no")
+#movies["sale_greater_30"] = np.where(movies["Sales"] > 30, "yes", "no")
 # note np.where only works with numeric
 #movies["adventure_dummy"] = np.where(movies["Genre"] = "Adventure", "yes", "no")
 
@@ -168,11 +260,20 @@ movies.loc[movies.Sales > 30, "adventure_dummy"] = ">30"
 
 
 # filters
-movies[(movies.Genre == "Adventure") | (movies.Genre == "Documentary")]
-movies.query("Genre == 'Adventure' | Genre == 'Documentary'")
-movies.query("Genre in ['Adventure', 'Documentary']")
-movies.query("Rating == 'R' & Sales > 20")
-movies.Actor.to_frame(name = "Actor").query("Actor == 'Tom Hardy'")
+# best way to filter is with .loc
+movies.loc[(movies.Genre == "Documentary") | (movies.Actor == "Tom Hardy"), :]
+movies.loc[(movies.Genre.isin(["Documentary", "Adventure"])) & (movies.Sales > 30), :]
+movies.loc[~(movies.Genre.isin(["Documentary", "Adventure"])) & (movies.Sales > 30), :]
+movies.loc[movies.Genre != "Documentary", :]
+
+
+# can also filter with .query()
+#movies[(movies.Genre ==. "Adventure") | (movies.Genre == "Documentary")]
+#movies.query("Genre == 'Adventure' | Genre == 'Documentary'")
+#movies.query("Genre in ['Adventure', 'Documentary']")
+#movies.query("Rating == 'R' & Sales > 20")
+#movies.query("Actor == 'Tom Hardy'").Actor
+#movies.query("Actor == 'Tom Hardy'").Actor.to_frame(name = "Actor")
 
 
 ##########################################################
@@ -225,6 +326,8 @@ movies_gather.melt(id_vars = ["Genre"], value_vars = ["PG-13", "R"],
 
 
 # bind_rows
+movies.iloc[0:5, ]
+movies.iloc[:, 2]
 movies1 = movies.iloc[0:5, ]
 movies1
 movies2 = movies.iloc[5:, ]
@@ -360,12 +463,25 @@ new_var = "new_movie_title"
 movies.rename(columns = {"Movie" : "new_movie_title"})
 movies.rename(columns = {var1 : new_var})
 
+# overwrite existing df
+movies2 = movies.rename(columns = {"Movie" : "new_movie_title"})
+movies2
+
 # tidy eval: the eval function can be used for numeric calculations
 eval_string = 'new_sales = Sales + 1'
 eval_string
 movies.eval('new_sales = Sales + 1')
 movies.eval('new_sales = Sales + 1', inplace = True)
 
+
+##########################################################3
+
+
+# list comprehension
+[name for name in movies.Actor]
+[(name + "_test") for name in movies.Actor]
+movies["Actor_test"] = [(name + "_test") for name in movies.Actor]
+movies
 
   
 #########################################################        
@@ -440,6 +556,31 @@ movies.Actor.str.lower().str.find("t", start = 0, end = 1).replace()
 
 # slice
 movies.Actor.str.slice(start = 0, stop = 3)
+
+# str.contains
+movies.columns.str.contains(pat = "^Act", case = False, regex = True)
+
+
+##############################################################
+
+
+# get dummy variables
+movies.dtypes
+movies_categorical_vars = movies.select_dtypes(include = ["object"])
+movies_categorical_vars.columns
+
+# get dummies
+movies_dummies = pd.get_dummies(data = movies_categorical_vars)
+movies_dummies
+
+# get numeric variables
+movies_numeric_vars = movies.select_dtypes(include = ["number"])
+movies_numeric_vars.columns
+
+# bind dummies and numeric
+movies2 = pd.concat([movies_numeric_vars, movies_dummies], axis = 1)
+movies2.columns
+movies2.head()
 
 
 #########################################
