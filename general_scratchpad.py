@@ -2,9 +2,9 @@ import os
 import pandas as pd
 import numpy as np
 import seaborn as sns
-from dplython import (DplyFrame, X, diamonds, select, sift,
-  sample_n, sample_frac, head, arrange, mutate, group_by,
-  summarize, DelayFunction)
+#from dplython import (DplyFrame, X, diamonds, select, sift,
+#  sample_n, sample_frac, head, arrange, mutate, group_by,
+#  summarize, DelayFunction)
 
 # set working directory
 os.chdir("C:/Users/Stephen/Desktop/Python/pandas")
@@ -157,6 +157,12 @@ movies[["Actor"]]
 movies.Actor.to_frame(name = "Actor")
 
 # get values
+# aka pull() from dplyr
+# preferred is using square brackets and quoted var name, then .values
+movies["Actor"].values
+movies["Actor"].values[0]
+movies["Actor"].values[0:5]
+
 movies.Actor.values
 movies.Rating.value_counts()
 
@@ -283,13 +289,26 @@ movies.loc[movies.Genre != "Documentary", :]
 movies.groupby("Genre").agg(["mean", "sum", "count"])
 
 # group summarizing
+# agg is the preferred way to summarize
+movies.groupby("Genre", as_index = False).agg({"Sales": ["mean", "sum", "count", "size"]})
+movies.groupby("Genre", as_index = False).agg({"Movie": "count", "Sales": ["mean", "sum", "count", "size"]})
+movies_summary = movies.groupby("Genre", as_index=False).\
+        agg({"Movie": "count", "Sales": ["mean", "sum", "count", "size"]})
+type(movies_summary)
+movies_summary
+# agg returns a dataframe, but need to reset column names
+# reset_index only resets the row index, to reset columns would require more painful reset_index parameters
+# instead, just use map to merge column names from index and re-assign as new column names
+# note apply only works on pandas series/df, not on lists, which is what the col names are
+movies_summary.columns.values
+movies_summary.columns = list(map("_".join, movies_summary.columns.values))
+movies_summary
+
+
 # note to get grouped counts, you need size function, but it returns 
 # a pd.series, not pd.dataframe, which has the counts as an index  aka rowname
 # so we need to use reset.index to convert index/rowname into a variable
 # then also name the new variable
-movies.groupby("Genre").agg(["mean", "sum", "count", "size"])
-movies.groupby("Genre").agg({"Movie": "count", "Sales": ["mean", "sum", "count"]})
-
 movies.groupby(["Genre", "Rating"]).agg(["count"])
 movies.groupby(["Genre", "Rating"]).count()
 movies.groupby(["Genre", "Rating"]).count().reset_index()
