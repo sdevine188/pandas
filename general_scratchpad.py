@@ -156,15 +156,26 @@ movies[["Actor"]]
 # can convert a series back to dataframe with .to_frame(name = )
 movies.Actor.to_frame(name = "Actor")
 
+
+##################
+
+
 # get values
 # aka pull() from dplyr
-# preferred is using square brackets and quoted var name, then .values
+
+# preferred is using square brackets and quoted var name, as opposed to df.var method
+
+# can get a list with tolist()
+movies["Actor"].tolist()
+
+# .valuse method to get array
 movies["Actor"].values
 movies["Actor"].values[0]
 movies["Actor"].values[0:5]
-
 movies.Actor.values
 movies.Rating.value_counts()
+
+
 
 
 #################################################3
@@ -199,8 +210,26 @@ movies.rename(columns = {"Movie" : "new_movie_title"})
 
 
 # mutate
+
+# add var as series
+type(movies.Movie)
+type(movies["Movie"])
 movies.assign(new_movie_title = movies.Movie)
 movies = movies.assign(new_movie_title = movies.Movie)
+
+# add var as list
+actor_var_as_list = movies.Actor.tolist()
+actor_var_as_list = movies["Actor"].tolist()
+type(actor_var_as_list)
+movies = movies.assign(new_actor_var2 = actor_var_as_list)
+movies
+
+# add var as array
+actor_var_as_array = movies["Actor"].values
+actor_var_as_array = movies.Actor.values
+type(actor_var_as_array)
+movies = movies.assign(new_actor_var3 = actor_var_as_array)
+movies
 
 # case_when
 # best way to conditional mutate is using .loc
@@ -381,6 +410,7 @@ movies_new
 
 
 # purrr
+# apply is the best to use; works on dataframe or series (identified with df.var or df[["<var>"]]) format
 movies.Sales + 1
 
 def add_string(column):
@@ -408,8 +438,10 @@ movies.groupby("Genre").apply(lambda x: x.Sales.mean()).reset_index(name = "mean
 
 
 # map function
-# note that map only works on series, applymap only works on dataframes
+# note that map only works on series using the df.var format, df[["<var>"]] method doesn't work
+# applymap only works on dataframes
 movies.Actor.map(add_string)
+movies[["Actor"]].map(add_string)
 movies.Actor.applymap(add_string)
 movies[["Actor", "Movie"]].map(add_string)
 movies[["Actor", "Movie"]].applymap(add_string)
