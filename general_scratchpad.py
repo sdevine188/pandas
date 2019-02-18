@@ -167,8 +167,9 @@ movies.Actor.to_frame(name = "Actor")
 
 # can get a list with tolist()
 movies["Actor"].tolist()
+movies.Actor.tolist()
 
-# .valuse method to get array
+# .values method to get array
 movies["Actor"].values
 movies["Actor"].values[0]
 movies["Actor"].values[0:5]
@@ -312,6 +313,14 @@ movies.loc[movies.Genre != "Documentary", :]
 
 
 ##########################################################
+
+
+# print output as table
+movies
+print(movies[["Actor", "Movie"]].to_string())
+
+
+########################################################
 
 
 # summarize
@@ -681,4 +690,5 @@ movies.count()
 movies_dpf.count()
 movies_dpf >> group_by(X.Genre) >> \
         summarize(avg_sales = X.Sales.mean(), genre_count = X.Actor.size())
+
 
