@@ -53,9 +53,20 @@ movies.columns
 ################################################
 
 
+my_list = ["test", "test2", "abc"]
+my_list
+
 # create dataframe from scratch - format is like a dictionary
+new_df = pd.DataFrame({"var_name" : my_list})
 new_df = pd.DataFrame({"var_name" : ["test", "test2", "abc"]})
 new_df
+type(new_df)
+
+# create just a series
+new_series = pd.Series(my_list)
+new_series = pd.Series(["test", "test2", "abc"])
+new_series
+type(new_series)
 
 
 #####################################################
@@ -133,6 +144,7 @@ movies.Actor
 movies.Actor[0:3]
 movies[0:2]
 movies[["Movie", "Actor"]]
+movies[["Actor", "Movie"]]
 movies.loc[1:2, "Movie"]
 movies.loc[0:0, "Movie"]
 movies.loc[:, "Movie"]
@@ -165,18 +177,31 @@ movies.Actor.to_frame(name = "Actor")
 
 # preferred is using square brackets and quoted var name, as opposed to df.var method
 
-# can get a list with tolist()
+# note you can't easily get values as a list from a dataframe, need to get it from a series
+movies[["Actor"]].tolist()
+# can get an array, but each value is its own list
+movies[["Actor"]].values
+movies[["Actor"]].values.tolist()
+list(movies[["Actor"]].values.flat)
+movies[["Actor", "Sales"]].values
+# to convert this array of nested lists, you need to flatten the array, then convert to a list
+list(movies[["Actor"]].values.flat)
+list(movies[["Actor", "Sales"]].values.flat)
+
+
+##############
+
+
+# can get a list from a series with tolist()
 movies["Actor"].tolist()
 movies.Actor.tolist()
 
-# .values method to get array
+# .values method to get clean array from series
 movies["Actor"].values
 movies["Actor"].values[0]
 movies["Actor"].values[0:5]
 movies.Actor.values
 movies.Rating.value_counts()
-
-
 
 
 #################################################3
@@ -325,6 +350,7 @@ print(movies[["Actor", "Movie"]].to_string())
 
 # summarize
 movies.groupby("Genre").agg(["mean", "sum", "count"])
+movies[["Sales"]].apply(lambda x: x.mean())
 
 # group summarizing
 # agg is the preferred way to summarize
@@ -383,11 +409,19 @@ movies_gather.melt(id_vars = ["Genre"], value_vars = ["PG-13", "R"],
 
 
 # bind_rows
-movies.iloc[0:5, ]
+movies.iloc[0:5, :]
 movies.iloc[:, 2]
-movies1 = movies.iloc[0:5, ]
+# note that the second number after ":" is excluded, 
+#so to get a single row as a dataframe, must be like .iloc[5:6, ]
+movies.iloc[5:6, :]
+type(movies.iloc[5:6, :])
+# if you just index with one number, it returns the row as a series, which is weird
+movies.iloc[5, :]
+type(movies.iloc[5, :])
+
+movies1 = movies.iloc[0:5, :]
 movies1
-movies2 = movies.iloc[5:, ]
+movies2 = movies.iloc[5:, :]
 movies2
 movies_original = movies1.append(movies2)
 movies_original
@@ -419,8 +453,49 @@ movies_new
 
 
 # purrr
-# apply is the best to use; works on dataframe or series (identified with df.var or df[["<var>"]]) format
+# apply is the best to use; works on dataframe (df[["<var>"]]) or series (df.var or df["<var>"]) 
 movies.Sales + 1
+
+# create function relying on the actual values as input (so .apply is passed a series not a dataframe)
+def classify_sales(sale_amount):
+        if(sale_amount > 20):
+                return("high_sales")
+        else:
+                return("low_sales")
+
+# note that .apply can receive a dataframe or a series
+# when inputting a series, .apply iterates through the actual values
+# but when inputting a df, .apply iterates through the columns
+# so to iterate through actual values of each column in a dataframe, you need to 
+# use a pass .apply a lambda function that converts each column into a series, 
+# on which you then .apply your function of interest (see below)
+# purrr map functions behave like they always receive a series, iterating through values 
+
+# when .apply is passed the dataframe, it can do operations to entire column vectors
+movies[["Sales"]].apply(lambda x: x + 1)
+# but can't process each individual value of a vector the way you can when .apply gets a series
+movies[["Sales"]].apply(lambda x: x[0])
+movies.Sales.apply(lambda x: x[0])
+
+# dataframe
+movies = movies.assign(Sales_2 = movies.Sales + 10)
+type(movies[["Sales"]])
+movies[["Sales"]].apply(classify_sales)
+movies[["Sales"]].apply(lambda x: type(x))
+movies[["Sales"]].apply(lambda x: type(x.values))
+pd.Series(list(movies[["Sales"]].values.flat)).apply(classify_sales)
+movies[["Sales"]].apply(lambda x: pd.Series(list(x.values.flat)).apply(classify_sales))
+movies[["Sales", "Sales_2"]].apply(lambda x: pd.Series(list(x.values.flat)).apply(classify_sales))
+
+# series
+type(movies["Sales"])
+movies["Sales"].apply(classify_sales)
+type(movies.Sales)
+movies.Sales.apply(classify_sales)
+
+
+###############
+
 
 def add_string(column):
         return "new_string_" + column
@@ -428,11 +503,19 @@ def add_string(column):
 def get_variable_type(variable):
         return(variable.dtype.name)
         
+# note .apply does not work on lists
+# need to use lambda function or list comprehension
+list_of_strings = ["lincoln", "obama", "fdr"]
+list_of_strings.apply(add_string)
+[("new_string_" + string) for string in list_of_strings]
+
+# using .apply on dataframes        
 movies.apply(get_variable_type)
 movies.dtypes
 
 add_string(movies.Actor)  
 movies.Actor.apply(add_string)
+movies["Actor"].apply(add_string)
 movies[["Actor", "Movie"]].apply(add_string)
 # apply axis = 0 (default) iterates over rows, axis = 1 iterates over columns, but same effect here
 movies[["Actor", "Movie"]].apply(add_string, axis = 0)
@@ -585,9 +668,47 @@ else:
 # for loop
 for sale_amount in movies["Sales"]:
         print(sale_amount + 1)
+     
+
+###########################################################
         
         
-###############################3
+# try / catch style error/exception/warning handling
+#https://jakevdp.github.io/WhirlwindTourOfPython/09-errors-and-exceptions.html
+#https://code.tutsplus.com/tutorials/professional-error-handling-with-python--cms-25950
+#https://stackoverflow.com/questions/3891804/raise-warning-in-python-without-interrupting-program
+        
+import warnings
+def e():
+        warnings.warn("this is just a warning", Warning)
+e()
+
+def f():
+    return 4 / 0
+ 
+def g():
+    raise Exception("Don't call us. We'll call you")
+ 
+def h():
+    try:
+        f()
+ 
+    # note that by default, e has a class defined by the type of error
+    # so if you want to manipulate the error name as a string, must first convert as str(e)
+    except Exception as e:
+        print(type(e))   
+        print("error message is " + str(e) + "\n\nThis error has stopped the function.")
+ 
+    try:
+        g()
+ 
+    except Exception as e:
+        print(e)
+        
+h()
+        
+        
+###############################################################
 
         
 # count missing variables
@@ -619,6 +740,18 @@ movies.Actor.str.slice(start = 0, stop = 3)
 
 # str.contains
 movies.columns.str.contains(pat = "^Act", case = False, regex = True)
+
+# concatenate strings
+"test1 " + "test2 " + "test3 "
+list = ["test1", "test2", "test3"]
+list
+
+# add to 
+list.append("test4")
+list
+
+# collapse strings
+" ".join(list)
 
 
 ##############################################################
