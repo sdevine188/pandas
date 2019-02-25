@@ -404,6 +404,10 @@ movies_gather
 movies_gather.melt(id_vars = ["Genre"], value_vars = ["PG-13", "R"], 
                    var_name = "Rating", value_name = "movie_count")
 
+# also works when there is no id_vars is specified
+movies_gather.melt(value_vars = ["PG-13", "R"], 
+                   var_name = "Rating", value_name = "movie_count")
+
 
 #############################################################
 
