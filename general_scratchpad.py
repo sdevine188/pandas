@@ -58,7 +58,7 @@ my_list
 
 # create dataframe from scratch - format is like a dictionary
 new_df = pd.DataFrame({"var_name" : my_list})
-new_df = pd.DataFrame({"var_name" : ["test", "test2", "abc"]})
+new_df = pd.DataFrame({"var_name" : ["test", "test2", "abc"], "var_name2" : ["test4", "test5", "ab6"]})
 new_df
 type(new_df)
 
@@ -100,6 +100,15 @@ movies.apply(lambda x: x.isnull().sum())
 # drop na values
 movies.Movie.dropna()
 movies.dropna()
+
+# fill na values
+movies.Sales.fillna("na_fill")
+movies.fillna("na_fill")
+
+# create fill_na function that can be used in .apply (since .fillna is just at method)
+def fill_na(df_column, replacement = "na_fill"):
+        return(df_column.fillna(replacement))
+movies.apply(fill_na, replacement = "na_test")
 
 # add na values
 movies.loc[4:4, "Actor"]
@@ -154,7 +163,8 @@ movies.drop(['Movie', 'Actor'], axis = 1)
 movies.columns
 
 # select all variables except some
-movies.loc[:, ~(movies.columns.isin(["Actor"]))]
+movies.drop(['Movie', 'Actor'], axis = 1)
+#movies.loc[:, ~(movies.columns.isin(["Actor"]))]
 
 # select columns using regex
 movies.loc[:, movies.columns.str.contains(pat = "^Act", case = False, regex = True)]
@@ -397,17 +407,28 @@ movies.groupby(["Movie", "Genre", "Rating"]).size().reset_index(name = "n").\
         rename_axis(None, axis = 1)
         
 # gather
-movies_gather = movies.groupby(["Genre", "Rating"]).size().reset_index(name = "n").\
+movies_spread = movies.groupby(["Genre", "Rating"]).size().reset_index(name = "n").\
         pivot(index = "Genre", columns = "Rating", values = "n").reset_index().\
         rename_axis(None, axis = 1)
-movies_gather
-movies_gather.melt(id_vars = ["Genre"], value_vars = ["PG-13", "R"], 
+movies_spread
+
+movies_spread.melt(id_vars = ["Genre"], value_vars = ["PG-13", "R"], 
                    var_name = "Rating", value_name = "movie_count")
 
-# also works when there is no id_vars is specified
-movies_gather.melt(value_vars = ["PG-13", "R"], 
+# melt also works when there is no id_vars is specified
+movies_spread.melt(value_vars = ["PG-13", "R"], 
                    var_name = "Rating", value_name = "movie_count")
 
+# also works when you don't reference all columns by name
+movies_spread.melt(value_vars = movies_spread.columns, 
+                   var_name = "Rating", value_name = "movie_count")
+
+columns_to_melt = ["PG-13", "R"]
+movies_spread.melt(value_vars = columns_to_melt, 
+                   var_name = "Rating", value_name = "movie_count")
+
+movies_spread.melt(id_vars = ["Genre"], value_vars = columns_to_melt, 
+                   var_name = "Rating", value_name = "movie_count")
 
 #############################################################
 
@@ -458,6 +479,7 @@ movies_new
 
 # purrr
 # apply is the best to use; works on dataframe (df[["<var>"]]) or series (df.var or df["<var>"]) 
+#http://jonathansoma.com/lede/foundations/classes/pandas%20columns%20and%20functions/apply-a-function-to-every-row-in-a-pandas-dataframe/
 movies.Sales + 1
 
 # create function relying on the actual values as input (so .apply is passed a series not a dataframe)
@@ -525,6 +547,25 @@ movies[["Actor", "Movie"]].apply(add_string)
 movies[["Actor", "Movie"]].apply(add_string, axis = 0)
 movies[["Actor", "Movie"]].apply(add_string, axis = 1)
 
+
+############
+
+
+# can use .apply(axis = 1) to apply function to each row, like with pmap
+movies = movies.assign(Sales_2 = movies.Sales + 10)
+movies.loc[1:5, "Sales"] = [55, np.nan, 65, 85, 95]
+
+# create get_higher_sales
+def get_higher_sales(row_df):
+        if(row_df.Sales >= row_df.Sales_2):
+                return(row_df.Sales)
+        else:
+                return(row_df.Sales_2)
+movies.assign(higher_sales = movies.apply(get_higher_sales, axis = 1))
+
+
+###########
+
 # lambda function on the fly
 movies.Actor.apply(lambda row: "new_string_" + row)
 movies[["Actor", "Movie"]].apply(lambda row: "new_string_" + row)
@@ -532,12 +573,16 @@ movies.groupby("Sales").apply(lambda x: x.mean())
 movies.groupby("Genre").apply(lambda x: x.Sales.mean())
 movies.groupby("Genre").apply(lambda x: x.Sales.mean()).reset_index(name = "mean")
 
+########
+
 
 # map function
-# note that map only works on series using the df.var format, df[["<var>"]] method doesn't work
+# note that map only works on series using df.var and df["var"] format, df[["<var>"]] dataframes don't work
 # applymap only works on dataframes
 movies.Actor.map(add_string)
+movies["Actor"].map(add_string)
 movies[["Actor"]].map(add_string)
+
 movies.Actor.applymap(add_string)
 movies[["Actor", "Movie"]].map(add_string)
 movies[["Actor", "Movie"]].applymap(add_string)
@@ -743,6 +788,7 @@ movies.Actor.str.lower().str.find("t", start = 0, end = 1).replace()
 movies.Actor.str.slice(start = 0, stop = 3)
 
 # str.contains
+# regular expressions: https://www.w3schools.com/python/python_regex.asp
 movies.columns.str.contains(pat = "^Act", case = False, regex = True)
 
 # concatenate strings
