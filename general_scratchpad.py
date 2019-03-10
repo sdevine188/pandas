@@ -36,10 +36,6 @@ x
 # read in csv
 movies = pd.read_csv("movies.csv")
 
-# read in .txt
-text = pd.read_fwf("pride.txt")
-text
-
 # write csv
 movies.to_csv("movies_test_to_csv.csv", index = False)
 
@@ -52,6 +48,13 @@ movies.tail(2)
 movies.describe()
 movies.dtypes
 movies.columns
+
+# read in .txt file
+# for some reason, the more basic open("pride.txt", "r").read() had errors
+text_df = pd.read_fwf("pride.txt")
+text_df = text_df.assign(text = text_df.iloc[:, 0]).iloc[:, 1]
+text = " ".join(text_df.tolist())
+text
 
 
 ################################################
@@ -243,7 +246,7 @@ movies.sort_values(["Rating", "Sales"], ascending = [False, True])
 
 
 # rename
-movies.rename(columns = {"Movie" : "new_movie_title"})
+movies.rename(columns = {"Movie" : "new_movie_title", "Actor" : "new_actor_name"})
 
 
 #############################################
