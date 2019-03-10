@@ -478,8 +478,13 @@ movies_new
 
 
 # purrr
-# apply is the best to use; works on dataframe (df[["<var>"]]) or series (df.var or df["<var>"]) 
+# apply is the best to use when you want the output returned by the function; 
+# works on dataframe (df[["<var>"]]) or series (df.var or df["<var>"]) 
 #http://jonathansoma.com/lede/foundations/classes/pandas%20columns%20and%20functions/apply-a-function-to-every-row-in-a-pandas-dataframe/
+
+# if you only want the side effect of the function (not what is returned) use a for loop
+# because apparently for some crazy reason, apply is called twice on the first row???
+# https://stackoverflow.com/questions/50477664/count-iterations-of-pandas-dataframe-apply-function
 movies.Sales + 1
 
 # create function relying on the actual values as input (so .apply is passed a series not a dataframe)
@@ -495,6 +500,7 @@ def classify_sales(sale_amount):
 # so to iterate through actual values of each column in a dataframe, you need to 
 # use a pass .apply a lambda function that converts each column into a series, 
 # on which you then .apply your function of interest (see below)
+# the transform is: .apply(lambda x: pd.Series(list(x.values.flat))
 # purrr map functions behave like they always receive a series, iterating through values 
 
 # when .apply is passed the dataframe, it can do operations to entire column vectors
@@ -562,6 +568,42 @@ def get_higher_sales(row_df):
         else:
                 return(row_df.Sales_2)
 movies.assign(higher_sales = movies.apply(get_higher_sales, axis = 1))
+
+
+###########
+
+
+# to update a variable from inside a function as a side effect,
+# you need to first define that variable inside the function as a global variable
+# this is like using the <<- "one level up" assignment operator in r
+# and is similar to walk/pwalk where you call a function for its side effect, not any output
+
+# note that *args allows for any number of unnamed arguments to be passed to function, like ... in r
+# this isn't necessary if it's called on its own where i can deliberatly not pass anything
+# like increment_counter_side_effect()
+# but if i call the function on a pandas series with .apply, then it has to be able to handle the
+# value .apply is passing it
+# if needed, you can also use *kwargs for any number of named arguments
+# https://stackoverflow.com/questions/919680/can-a-variable-number-of-arguments-be-passed-to-a-function
+
+# create increment_counter_side_effect function
+def increment_counter_side_effect(*args):
+        global counter
+        print("counter is at number " + str(counter))
+        counter = counter + 1
+
+# set counter
+counter = 0
+
+# call increment_counter_side_effect() by itself for side effect on counter variable
+increment_counter_side_effect()
+increment_counter_side_effect()
+increment_counter_side_effect()
+counter
+
+# can also call function for side effect on variables using .apply w/ pandas
+pd.DataFrame({"row_number" : list(range(1, 6))})  .row_number.apply(increment_counter_side_effect)
+counter
 
 
 ###########
