@@ -9,7 +9,7 @@ import seaborn as sns
 # set working directory
 os.chdir("C:/Users/Stephen/Desktop/Python/pandas")
 os.getcwd()
-os.listdir(".")
+os.listdir()
 
 x = "test2"
 x
@@ -35,6 +35,10 @@ x
 
 # read in csv
 movies = pd.read_csv("movies.csv")
+
+# read in .txt
+text = pd.read_fwf("pride.txt")
+text
 
 # write csv
 movies.to_csv("movies_test_to_csv.csv", index = False)
