@@ -2,6 +2,9 @@ import os
 import pandas as pd
 import numpy as np
 import seaborn as sns
+
+# https://stmorse.github.io/journal/tidyverse-style-pandas.html
+
 #from dplython import (DplyFrame, X, diamonds, select, sift,
 #  sample_n, sample_frac, head, arrange, mutate, group_by,
 #  summarize, DelayFunction)
@@ -159,6 +162,17 @@ list(movies)
 movies.Actor
 movies.Actor[0:3]
 movies[0:2]
+movies.columns
+
+# preferred way to select columns in pandas
+movies.filter(["Actor", "Movie"])
+movies.filter(regex = "^A")
+
+# select all variables except some
+movies.drop(['Movie', 'Actor'], axis = 1)
+#movies.loc[:, ~(movies.columns.isin(["Actor"]))]
+
+# selecting variables using brackets and .loc 
 movies[["Movie", "Actor"]]
 movies[["Actor", "Movie"]]
 movies.loc[1:2, "Movie"]
@@ -166,16 +180,9 @@ movies.loc[0:0, "Movie"]
 movies.loc[:, "Movie"]
 movies.loc[:, ["Movie", "Rating"]]
 movies.loc[:, "Movie":"Rating"]
-movies.drop(['Movie', 'Actor'], axis = 1)
-movies.columns
-
-# select all variables except some
-movies.drop(['Movie', 'Actor'], axis = 1)
-#movies.loc[:, ~(movies.columns.isin(["Actor"]))]
 
 # select columns using regex
 movies.loc[:, movies.columns.str.contains(pat = "^Act", case = False, regex = True)]
-
 
 # note single brackets or dot subsetting just provides series without var name
 # but double brackets returns dataframe
@@ -224,8 +231,9 @@ movies.Rating.value_counts()
 #################################################3
 
 
-# distinct
+# distinct 
 movies.Genre.unique()
+movies.Genre.drop_duplicates()
 movies.Genre.value_counts()
 movies[["Genre", "Rating"]].drop_duplicates()
 # value_counts() and unique() don't work with dataframe, only with series
@@ -276,6 +284,11 @@ movies
 
 # case_when
 # best way to conditional mutate is using .loc
+# also note use of .isin(), which is similiar to %in% operator in r
+# another option is the 'in' operator (see below)
+# test = ["a", "b", "c"]
+# "b" in test
+# "e" in test
 movies2 = movies.copy()
 movies2
 movies2.loc[(movies.Genre == "Documentary") | (movies.Genre == "Adventure"), "Genre"] = "best_genre"
@@ -293,7 +306,7 @@ movies.replace({"Actor" : "Tom Hardy", "Movie" : "AI"}, "awesome")
 movies.replace({"Actor" : {"Tom Hardy" : "Tom", "Sam Neil" : "Sam"}})
 movies.replace({"Actor" : {"Tom H" : "Tom", "Sam Neil" : "Sam"}})
 movies.replace({"Actor" : {"Tom H" : "Tom", "Sam Neil" : "Sam"}}, regex = True)
-movies.replace({"Actor" : {"Tom Hardy" : "Tom", "Sam Neil" : "Sam"}}).\
+movies.replace({"Actor" : {"Tom Hardy" : "Tom", "Sam Neil" : "Sam"}}).
                replace({"Movie" : {"Dunkirk" : "great", "AI" : "awesome"}})
 # regex = True allow for partial string replacements
 movies.replace({"Actor" : "e"}, {"Actor": "z"}, regex = True)
@@ -307,9 +320,13 @@ replacement_df = pd.DataFrame({"replacement_variable" : ["Actor", "Movie"],
                               "replacement_value_start" : ["Tom Hardy", "AI"],
                               "replacement_value_end" : ["Tom", "awesome"]})
 replacement_df
-movies.replace({replacement_df.replacement_variable[0] : \
+movies.replace({replacement_df.replacement_variable[0] : 
                        {replacement_df.replacement_value_start[0] : replacement_df.replacement_value_end[0]}})
 
+        
+# add row_numbers like row_number() function
+movies.assign(row_number = list(range(0, movies.shape[0])))        
+        
 
 # additional options for case_when, but dictionary seems best
 #movies.replace({"Actor" : "Tom Hardy"}, {"Actor": "great_actor"})
@@ -326,38 +343,41 @@ movies.replace({replacement_df.replacement_variable[0] : \
 # note np.where only works with numeric
 #movies["adventure_dummy"] = np.where(movies["Genre"] = "Adventure", "yes", "no")
 
+# instead of np.where, create new var, then conditional mutate using .loc
+#movies = movies.assign(adventure_dummy = "no")
+#movies.loc[movies.Sales > 30]
+#movies.loc[movies.Sales > 30, "adventure_dummy"]
+#movies.loc[movies.Sales > 30, "adventure_dummy"] = ">30"
+
 
 ##############################################3
 
 
-# instead of np.where, create new var, then conditional mutate using .loc
-movies = movies.assign(adventure_dummy = "no")
-movies.loc[movies.Sales > 30]
-movies.loc[movies.Sales > 30, "adventure_dummy"]
-movies.loc[movies.Sales > 30, "adventure_dummy"] = ">30"
-
-
-# filters
-# best way to filter is with .loc
-movies.loc[(movies.Genre == "Documentary") | (movies.Actor == "Tom Hardy"), :]
-movies.loc[(movies.Genre.isin(["Documentary", "Adventure"])) & (movies.Sales > 30), :]
-movies.loc[~(movies.Genre.isin(["Documentary", "Adventure"])) & (movies.Sales > 30), :]
-movies.loc[movies.Genre != "Documentary", :]
-
-
+# query is the pandas equivalent of filter
 # can also filter with .query()
-#movies[(movies.Genre ==. "Adventure") | (movies.Genre == "Documentary")]
-#movies.query("Genre == 'Adventure' | Genre == 'Documentary'")
-#movies.query("Genre in ['Adventure', 'Documentary']")
-#movies.query("Rating == 'R' & Sales > 20")
-#movies.query("Actor == 'Tom Hardy'").Actor
-#movies.query("Actor == 'Tom Hardy'").Actor.to_frame(name = "Actor")
+movies[(movies.Genre == "Adventure") | (movies.Genre == "Documentary")]
+movies.query("Genre in ['Adventure', 'Documentary']")
+movies.query("Genre == 'Adventure' | Genre == 'Documentary'")
+movies.query("Genre in ['Adventure', 'Documentary']")
+movies.query("Rating == 'R' & Sales > 20")
+movies.query("Actor == 'Tom Hardy'").Actor
+movies.query("Actor == 'Tom Hardy'").Actor.to_frame(name = "Actor")
+# for some reasons query with str.contains requires the engine = "python" argument??
+#https://stackoverflow.com/questions/44933071/select-rows-by-partial-string-with-query-with-pandas/53344073#53344073
+movies.query("Actor.str.contains('^T|L|S')", engine = "python")
+
+# at some point, i thought or read the best way to filter is with .loc
+# but now i'm not sure why, and i like .query better for now
+#movies.loc[(movies.Genre == "Documentary") | (movies.Actor == "Tom Hardy"), :]
+#movies.loc[(movies.Genre.isin(["Documentary", "Adventure"])) & (movies.Sales > 30), :]
+#movies.loc[~(movies.Genre.isin(["Documentary", "Adventure"])) & (movies.Sales > 30), :]
+#movies.loc[movies.Genre != "Documentary", :]
 
 
 ##########################################################
 
 
-# print output as table
+# print output as table, like data.frame() in r
 movies
 print(movies[["Actor", "Movie"]].to_string())
 
@@ -366,14 +386,34 @@ print(movies[["Actor", "Movie"]].to_string())
 
 
 # summarize
-movies.groupby("Genre").agg(["mean", "sum", "count"])
+
+# groupby is like group_by
+# but notice it returns a groupby object, not a dataframe like in r
+# note group_keys = False is necessary sometimes to keep pandas from outputing a silly level_1 variable in df
+# because for some reason it's creating an index based on the groups??
+movies.groupby("Genre", group_keys = False)
+movies.groupby("Genre", group_keys = False).groups
+# it's almost like a nested dataframe in r, in that you can pull out the grouped df with get_group()
+movies.groupby("Genre", group_keys = False).get_group("Adventure")
+# like purrr map functions, .apply will automatically recombine grouped df for you
+movies.groupby("Genre", group_keys = False).apply(lambda x: x)
+
+# groupby apply
+sales_mean_by_genre = movies.groupby("Genre", group_keys = False).
+        apply(lambda group_df: group_df.Sales.mean()).
+        reset_index(name = "sales_mean")
+sales_mean_by_genre
+type(sales_mean_by_genre)
+
+# groupby .agg
+movies.groupby("Genre", group_keys = False).agg(["mean", "sum", "count"])
 movies[["Sales"]].apply(lambda x: x.mean())
 
 # group summarizing
 # agg is the preferred way to summarize
-movies.groupby("Genre", as_index = False).agg({"Sales": ["mean", "sum", "count", "size"]})
-movies.groupby("Genre", as_index = False).agg({"Movie": "count", "Sales": ["mean", "sum", "count", "size"]})
-movies_summary = movies.groupby("Genre", as_index=False).\
+movies.groupby("Genre", group_keys = False).agg({"Sales": ["mean", "sum", "count", "size"]})
+movies.groupby("Genre", group_keys = False).agg({"Movie": "count", "Sales": ["mean", "sum", "count", "size"]})
+movies_summary = movies.groupby("Genre", as_index=False).
         agg({"Movie": "count", "Sales": ["mean", "sum", "count", "size"]})
 type(movies_summary)
 movies_summary
@@ -390,12 +430,12 @@ movies_summary
 # a pd.series, not pd.dataframe, which has the counts as an index  aka rowname
 # so we need to use reset.index to convert index/rowname into a variable
 # then also name the new variable
-movies.groupby(["Genre", "Rating"]).agg(["count"])
-movies.groupby(["Genre", "Rating"]).count()
-movies.groupby(["Genre", "Rating"]).count().reset_index()
-movies.groupby(["Genre", "Rating"]).size()
-movies.groupby(["Genre", "Rating"]).size().reset_index()
-movies.groupby(["Genre", "Rating"]).size().reset_index(name = "n")
+movies.groupby(["Genre", "Rating"], group_keys = False).agg(["count"])
+movies.groupby(["Genre", "Rating"], group_keys = False).count()
+movies.groupby(["Genre", "Rating"], group_keys = False).count().reset_index()
+movies.groupby(["Genre", "Rating"], group_keys = False).size()
+movies.groupby(["Genre", "Rating"], group_keys = False).size().reset_index()
+movies.groupby(["Genre", "Rating"], group_keys = False).size().reset_index(name = "n")
 
 
 ######################################################
@@ -404,18 +444,18 @@ movies.groupby(["Genre", "Rating"]).size().reset_index(name = "n")
 # tidyr
 
 # spread
-movies.groupby(["Genre", "Rating"]).size().reset_index(name = "n").\
-        pivot(index = "Genre", columns = "Rating", values = "n").reset_index().\
+movies.groupby(["Genre", "Rating"], group_keys = False).size().reset_index(name = "n").
+        pivot(index = "Genre", columns = "Rating", values = "n").reset_index().
         rename_axis(None, axis = 1)
 
-movies.groupby(["Movie", "Genre", "Rating"]).size().reset_index(name = "n").\
-        assign(genre_rating = movies.Genre.str.cat(movies.Rating, sep = "_")).\
-        pivot(index = "Movie", columns = "genre_rating", values = "n").reset_index().\
+movies.groupby(["Movie", "Genre", "Rating"], group_keys = False).size().reset_index(name = "n").
+        assign(genre_rating = movies.Genre.str.cat(movies.Rating, sep = "_")).
+        pivot(index = "Movie", columns = "genre_rating", values = "n").reset_index().
         rename_axis(None, axis = 1)
         
 # gather
-movies_spread = movies.groupby(["Genre", "Rating"]).size().reset_index(name = "n").\
-        pivot(index = "Genre", columns = "Rating", values = "n").reset_index().\
+movies_spread = movies.groupby(["Genre", "Rating"], group_keys = False).size().reset_index(name = "n").
+        pivot(index = "Genre", columns = "Rating", values = "n").reset_index().
         rename_axis(None, axis = 1)
 movies_spread
 
@@ -569,12 +609,20 @@ movies = movies.assign(Sales_2 = movies.Sales + 10)
 movies.loc[1:5, "Sales"] = [55, np.nan, 65, 85, 95]
 
 # create get_higher_sales
-def get_higher_sales(row_df):
-        if(row_df.Sales >= row_df.Sales_2):
-                return(row_df.Sales)
+def get_higher_sales(current_row_df):
+        if(current_row_df.Sales >= current_row_df.Sales_2):
+                return(current_row_df.Sales)
         else:
-                return(row_df.Sales_2)
+                return(current_row_df.Sales_2)
+
+# call get_higher_sales and assign to higher_sales variable               
 movies.assign(higher_sales = movies.apply(get_higher_sales, axis = 1))
+
+
+# note that when using apply(axis = 1) like pmap, 
+# it's passing your function the actual value as string/number, not a df or series
+movies.apply(lambda x: x.Actor, axis = 1)
+movies.apply(lambda x: type(x.Actor), axis = 1)
 
 
 ###########
@@ -615,12 +663,31 @@ counter
 
 ###########
 
+
+# groupby .apply is like nested dataframe in r
+# you get access to the full group df
+# and .apply automatically re-combines the output dfs into a single df or series for you
+def get_group_nrow(group_df):
+        return(group_df.shape[0])
+
+movies.groupby("Genre", group_keys = False).groups
+movies.groupby("Genre", group_keys = False).get_group("Adventure")
+movies.groupby("Genre", group_keys = False).get_group("Documentary")
+movies.groupby("Genre", group_keys = False).get_group("Sci-fi")
+
+movies.groupby("Genre", group_keys = False).apply(get_group_nrow)
+
+
+###############
+
+
 # lambda function on the fly
 movies.Actor.apply(lambda row: "new_string_" + row)
 movies[["Actor", "Movie"]].apply(lambda row: "new_string_" + row)
-movies.groupby("Sales").apply(lambda x: x.mean())
-movies.groupby("Genre").apply(lambda x: x.Sales.mean())
-movies.groupby("Genre").apply(lambda x: x.Sales.mean()).reset_index(name = "mean")
+movies.groupby("Sales", group_keys = False).apply(lambda x: x.mean())
+movies.groupby("Genre", group_keys = False).apply(lambda x: x.Sales.mean())
+movies.groupby("Genre", group_keys = False).apply(lambda x: x.Sales.mean()).reset_index(name = "mean")
+
 
 ########
 
@@ -644,21 +711,24 @@ movies[["Actor", "Movie"]].applymap(add_string)
 # pipe: return only series
 def plus1_series(dataframe, variable):
         return dataframe[variable] + 1
+
 plus1_series(dataframe = movies, variable = ["Sales"])
 movies.pipe(plus1_series, variable = ["Sales"])
 
 # pipe: return entire df
 def plus1_df(dataframe, variable):
         return dataframe.assign(new_var = dataframe[variable] + 1)
+
 plus1_df(dataframe = movies, variable = ["Sales"])
 movies.pipe(plus1_df, variable = ["Sales"])
+
 # pipe with tidy eval
 new_var = "Sales"
 movies.pipe(plus1_df, variable = [new_var])
 
 # multiple pipes into each other
 def copy_var(dataframe, variable):
-        return dataframe.\
+        return dataframe.
         assign(new_var2 = dataframe[variable])
 copy_var(dataframe = movies, variable = ["Genre"])
 movies.pipe(plus1_df, variable = ["Sales"]).pipe(copy_var, variable = ["Sales"])
@@ -667,8 +737,8 @@ movies.pipe(plus1_df, variable = ["Sales"]).pipe(copy_var, variable = ["Sales"])
 def join_string(dataframe, variable, string):
         return dataframe.assign(new_var3 = dataframe[variable] + string)
 join_string(dataframe = movies, variable = ["Genre"], string = "test")
-movies.pipe(plus1_df, variable = ["Sales"])\
-        .pipe(copy_var, variable = ["Sales"])\
+movies.pipe(plus1_df, variable = ["Sales"])
+        .pipe(copy_var, variable = ["Sales"])
         .pipe(join_string, variable = ["Genre"], string = "test")
         
 
@@ -750,14 +820,33 @@ pd.crosstab([movies.Genre, movies.Movie], movies.Rating, margins = True)
 ################################################
 
 
+# if statement
 # if/else statement
 value = 2
-if value > 5:
+value = 6
+if(value > 5):
         print("greater_than_5")
-elif value > 4:
+elif (value > 4):
         print("greater_than_4")
 else: 
         print("less_than_or_equal_to_4")
+  
+# not operator, like ! in r
+if(not(value > 5)):
+        print("not greater than 5")
+  
+# and operator, like & in r
+# note that & technically works in this simple case, but seems more complicated behind the scenes
+# and sounds like 'and' is favored for non-array and non-mathematical use cases
+# https://stackoverflow.com/questions/22646463/difference-between-and-boolean-vs-bitwise-in-python-why-difference-i
+if(value > 3 and value < 7):
+        print("greater than 3 and less than 7")
+#if(value > 3 & value < 7):
+#        print("greater than 3 and less than 7")
+      
+# not equal to operator
+if(value != 4):
+        print("value is not equal to 4")
 
 
 #########################################################
@@ -920,7 +1009,7 @@ movies_dpf >> select(X.Actor) >> head(5)
 # dplython 
 movies.count()
 movies_dpf.count()
-movies_dpf >> group_by(X.Genre) >> \
+movies_dpf >> group_by(X.Genre) >> 
         summarize(avg_sales = X.Sales.mean(), genre_count = X.Actor.size())
 
 
