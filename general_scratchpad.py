@@ -10,6 +10,8 @@ import seaborn as sns
 #  summarize, DelayFunction)
 
 # set working directory
+# can also set working directory using spyder GUI by clicking "File Explorer" tab in bottom right
+# then whatever folder you navigate to becomes your working directory automatically
 os.chdir("C:/Users/Stephen/Desktop/Python/pandas")
 os.getcwd()
 os.listdir()
@@ -40,13 +42,13 @@ x
 movies = pd.read_csv("movies.csv")
 
 # write csv
-movies.to_csv("movies_test_to_csv.csv", index = False)
+#movies.to_csv("movies_test_to_csv.csv", index = False)
 
 # inspect
 # note that read_csv converts blanks, NA, or NaN into NaN
 movies
 movies.shape
-movies.head()
+movies.head() 
 movies.tail(2)
 movies.describe()
 movies.dtypes
@@ -102,6 +104,13 @@ movies
 #################################################
 
 
+# wrap code onto next line with \
+movies.query("Genre == 'Sci-fi'").\
+        filter(["Genre", "Rating"])
+
+#################################################
+
+
 # missing values
 # check for missing
 movies.apply(lambda x: x.isnull())
@@ -138,6 +147,8 @@ movies2 = movies.replace({"Actor" : {"HAL" : np.nan}}).copy()
 movies2
 movies2.apply(lambda x: x.isnull().sum())
 
+# convert all NaN values to blank
+movies.replace(np.nan, '', regex = True)
 
 ######################################################
 
@@ -199,7 +210,24 @@ movies.Actor.to_frame(name = "Actor")
 # get values
 # aka pull() from dplyr
 
-# preferred is using square brackets and quoted var name, as opposed to df.var method
+
+# can get a list from a series with tolist()
+movies["Actor"].tolist()
+movies.Actor.tolist()
+
+# .values method to get clean array from series
+movies["Actor"].values
+movies["Actor"].values[0]
+movies["Actor"].values[0:5]
+movies.Actor.values
+movies.Rating.value_counts()
+
+
+######################################################
+
+
+# at one point i heard or read that preferred way to get values is 
+# subsetting df with brackets and quoted var name, instead of .varname syntax; but now not sure why; 
 
 # note you can't easily get values as a list from a dataframe, need to get it from a series
 movies[["Actor"]].tolist()
@@ -212,20 +240,6 @@ movies[["Actor", "Sales"]].values
 list(movies[["Actor"]].values.flat)
 list(movies[["Actor", "Sales"]].values.flat)
 
-
-##############
-
-
-# can get a list from a series with tolist()
-movies["Actor"].tolist()
-movies.Actor.tolist()
-
-# .values method to get clean array from series
-movies["Actor"].values
-movies["Actor"].values[0]
-movies["Actor"].values[0:5]
-movies.Actor.values
-movies.Rating.value_counts()
 
 
 #################################################3
@@ -362,9 +376,21 @@ movies.query("Genre in ['Adventure', 'Documentary']")
 movies.query("Rating == 'R' & Sales > 20")
 movies.query("Actor == 'Tom Hardy'").Actor
 movies.query("Actor == 'Tom Hardy'").Actor.to_frame(name = "Actor")
+
+# can also use a variable in query, which is called with prefix @
+actor_name = "Tom Hardy"
+movies.query("Actor == actor_name")
+movies.query("Actor == @actor_name")
+
 # for some reasons query with str.contains requires the engine = "python" argument??
 #https://stackoverflow.com/questions/44933071/select-rows-by-partial-string-with-query-with-pandas/53344073#53344073
 movies.query("Actor.str.contains('^T|L|S')", engine = "python")
+
+# to include np.nan in a query, use "value != value" or "value.isnull", engine = "python"
+# you can't just use "Movie == np.nan" or even use local variable
+# https://stackoverflow.com/questions/26535563/querying-for-nan-and-other-names-in-pandas
+movies.query("Movie != Movie")
+movies.query("Movie.isnull()", engine = "python")
 
 # at some point, i thought or read the best way to filter is with .loc
 # but now i'm not sure why, and i like .query better for now
@@ -372,6 +398,14 @@ movies.query("Actor.str.contains('^T|L|S')", engine = "python")
 #movies.loc[(movies.Genre.isin(["Documentary", "Adventure"])) & (movies.Sales > 30), :]
 #movies.loc[~(movies.Genre.isin(["Documentary", "Adventure"])) & (movies.Sales > 30), :]
 #movies.loc[movies.Genre != "Documentary", :]
+
+#########################################################
+
+
+# iloc is the pandas equivalent of slice, subsetting df based on row or col index
+movies.iloc[0:1, :]
+movies.iloc[2:4, :]
+movies.iloc[2:4, 0:2]
 
 
 ##########################################################
@@ -444,18 +478,29 @@ movies.groupby(["Genre", "Rating"], group_keys = False).size().reset_index(name 
 # tidyr
 
 # spread
-movies.groupby(["Genre", "Rating"], group_keys = False).size().reset_index(name = "n").
-        pivot(index = "Genre", columns = "Rating", values = "n").reset_index().
+
+movies.groupby(["Genre", "Rating"], group_keys = False).size().reset_index(name = "n").\
+        pivot(index = "Genre", columns = "Rating", values = "n").reset_index().\
         rename_axis(None, axis = 1)
 
-movies.groupby(["Movie", "Genre", "Rating"], group_keys = False).size().reset_index(name = "n").
-        assign(genre_rating = movies.Genre.str.cat(movies.Rating, sep = "_")).
-        pivot(index = "Movie", columns = "genre_rating", values = "n").reset_index().
+movies.groupby(["Movie", "Genre", "Rating"], group_keys = False).size().reset_index(name = "n").\
+        assign(genre_rating = movies.Genre.str.cat(movies.Rating, sep = "_")).\
+        pivot(index = "Movie", columns = "genre_rating", values = "n").reset_index().\
         rename_axis(None, axis = 1)
+
+# when you don't have a convenient index, you can create one
+movies_pivot = movies.groupby(["Genre", "Rating"], group_keys = False).size().reset_index(name = "n").\
+        filter(["Rating", "n"])
+movies_pivot["group_index"] = movies_pivot.groupby(["Rating"], group_keys = False).cumcount()
+movies_pivot
+movies_pivot.pivot(index = "group_index", columns = "Rating", values = "n").reset_index().\
+        rename_axis(None, axis = 1).drop(["group_index"], axis = 1)
+        
+movies.loc[(movies.Genre == "Documentary") | (movies.Genre == "Adventure"), "Genre"] = "best_genre"
         
 # gather
-movies_spread = movies.groupby(["Genre", "Rating"], group_keys = False).size().reset_index(name = "n").
-        pivot(index = "Genre", columns = "Rating", values = "n").reset_index().
+movies_spread = movies.groupby(["Genre", "Rating"], group_keys = False).size().reset_index(name = "n").\
+        pivot(index = "Genre", columns = "Rating", values = "n").reset_index().\
         rename_axis(None, axis = 1)
 movies_spread
 
@@ -609,18 +654,21 @@ movies = movies.assign(Sales_2 = movies.Sales + 10)
 movies.loc[1:5, "Sales"] = [55, np.nan, 65, 85, 95]
 
 # create get_higher_sales
-def get_higher_sales(current_row_df):
-        if(current_row_df.Sales >= current_row_df.Sales_2):
-                return(current_row_df.Sales)
+def get_higher_sales(current_row_series):
+        if(current_row_series.Sales >= current_row_series.Sales_2):
+                return(current_row_series.Sales)
         else:
-                return(current_row_df.Sales_2)
+                return(current_row_series.Sales_2)
 
 # call get_higher_sales and assign to higher_sales variable               
 movies.assign(higher_sales = movies.apply(get_higher_sales, axis = 1))
 
 
 # note that when using apply(axis = 1) like pmap, 
-# it's passing your function the actual value as string/number, not a df or series
+# it's passing your function the series, not a df, 
+# it seems to have similar properties to df, 
+# but just no need for something like x.Actor.tolist[0] to get raw values, only x.Actor
+movies.apply(lambda x: type(x), axis = 1)
 movies.apply(lambda x: x.Actor, axis = 1)
 movies.apply(lambda x: type(x.Actor), axis = 1)
 
@@ -922,10 +970,16 @@ movies.Actor.str.lower().str.find("t")
 movies.Actor.str.lower().str.find("t", start = 0, end = 1)
 movies.Actor.str.lower().str.find("t", start = 0, end = 1).replace()
 
-# slice
+# str_sub equivalent is str.slice
 movies.Actor.str.slice(start = 0, stop = 3)
 
-# str.contains
+# str_extract equivalent is str.extract
+
+# str_split equivalent is str.split
+movies.Actor.str.split(" ", n = 1, expand = True)
+movies.assign(actor_first_name = movies.Actor.str.split(" ", n = 1, expand = True)[0])
+
+# str_detect equivalent is str.contains
 # regular expressions: https://www.w3schools.com/python/python_regex.asp
 movies.columns.str.contains(pat = "^Act", case = False, regex = True)
 
@@ -940,6 +994,16 @@ list
 
 # collapse strings
 " ".join(list)
+
+# replace string
+# note that unless regex = True, str.replace apparently only matches full strings
+# so the partial string "dventure" won't match anything with regex = False
+# for some reason str.replace doesn't work for me on the last example
+# but regular .replace does??
+movies.Genre.replace("dventure", "D", regex = False)
+movies.Genre.replace("Adventure", "D")
+movies.Genre.replace("^.*v", "D", regex = True)
+movies.Genre.replace("^.*v", "D", regex = True)
 
 
 ##############################################################
