@@ -46,6 +46,7 @@ movies = pd.read_csv("movies.csv")
 
 # inspect
 # note that read_csv converts blanks, NA, or NaN into NaN
+# similiar functions to glimpse()
 movies
 movies.shape
 movies.head() 
@@ -67,6 +68,12 @@ text
 
 my_list = ["test", "test2", "abc"]
 my_list
+
+# get length of list using len()
+len(my_list)
+
+# check class using type()
+type(my_list)
 
 # create dataframe from scratch - format is like a dictionary
 new_df = pd.DataFrame({"var_name" : my_list})
@@ -903,6 +910,10 @@ if(value != 4):
 # for loop
 for sale_amount in movies["Sales"]:
         print(sale_amount + 1)
+        
+
+for i in list(range(0, movies.shape[0])):
+        print(movies.Movie[i])
      
 
 ###########################################################
@@ -982,6 +993,7 @@ movies.assign(actor_first_name = movies.Actor.str.split(" ", n = 1, expand = Tru
 # str_detect equivalent is str.contains
 # regular expressions: https://www.w3schools.com/python/python_regex.asp
 movies.columns.str.contains(pat = "^Act", case = False, regex = True)
+"the big lebowski".__contains__(" bi")
 
 # concatenate strings
 "test1 " + "test2 " + "test3 "
@@ -1028,6 +1040,35 @@ movies2.columns
 movies2.head()
 
 
+######################################################
+########################################################
+########################################################
+
+
+# handle dictionary/dictionaries
+
+# create dict
+my_dict = {"actor": ["brad pitt", "ed norton", "leonardo dicaprio"], 
+           "age": [50, 45, 40]}
+my_dict
+
+# get list of values
+my_dict["actor"]
+my_dict["actor"][1]
+
+# change value
+my_dict["age"][1] = 46
+my_dict
+
+# drop item in dict using .pop method
+my_dict
+my_dict.pop("actor")
+my_dict["actor"].pop(1)
+my_dict["age"].pop(1)
+
+
+#########################################
+#########################################
 #########################################
 
 
@@ -1075,5 +1116,8 @@ movies.count()
 movies_dpf.count()
 movies_dpf >> group_by(X.Genre) >> 
         summarize(avg_sales = X.Sales.mean(), genre_count = X.Actor.size())
+
+
+
 
 
