@@ -123,6 +123,11 @@ movies.query("Genre == 'Sci-fi'").\
 movies.apply(lambda x: x.isnull())
 movies.apply(lambda x: x.isnull().sum())
 
+# query missing values
+# since NaN is not equal to itself, you can use "var != var" to get NaN values
+movies
+movies.query("Movie != Movie")
+
 # drop na values
 movies.Movie.dropna()
 movies.dropna()
