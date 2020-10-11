@@ -1,3 +1,4 @@
+
 import os
 import pandas as pd
 import numpy as np
@@ -384,7 +385,6 @@ movies.assign(row_number = list(range(0, movies.shape[0])))
 movies[(movies.Genre == "Adventure") | (movies.Genre == "Documentary")]
 movies.query("Genre in ['Adventure', 'Documentary']")
 movies.query("Genre == 'Adventure' | Genre == 'Documentary'")
-movies.query("Genre in ['Adventure', 'Documentary']")
 movies.query("Rating == 'R' & Sales > 20")
 movies.query("Actor == 'Tom Hardy'").Actor
 movies.query("Actor == 'Tom Hardy'").Actor.to_frame(name = "Actor")
@@ -1019,7 +1019,12 @@ list
 # but regular .replace does??
 movies.Genre.replace("dventure", "D", regex = False)
 movies.Genre.replace("Adventure", "D")
+movies.Genre.replace("Adventure|Sci-fi", "D", regex = True)
 movies.Genre.replace("^.*v", "D", regex = True)
+movies.Genre.replace("^.*v", "D", regex = True)
+movies2 = movies.copy()
+movies2.Genre = movies2.Genre.replace("^.*v", "D", regex = True)
+movies2
 movies.Genre.replace("^.*v", "D", regex = True)
 
 
